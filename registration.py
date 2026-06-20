@@ -54,7 +54,6 @@ class RegStates(StatesGroup):
     waiting_unregister_name = State()
 
 
-# Временные хранилища коротких ID
 pending_requests: dict[str, dict] = {}
 confirm_data: dict[str, str] = {}
 slot_select_data: dict[str, str] = {}
@@ -856,10 +855,13 @@ async def unregister(callback: CallbackQuery, state: FSMContext):
     await callback.answer()
 
 
-# ===================== ОДОБРЕНИЕ/ОТКЛОНЕНИЕ ВЛАДЕЛЬЦЕМ =====================
+# ===================== ОДОБРЕНИЕ/ОТКЛОНЕНИЕ ВЛАДЕЛЬЦЕМ (отладка) =====================
 
 @router.callback_query(F.data.startswith("approve_"))
 async def approve_request(callback: CallbackQuery):
+    # Отладочное сообщение – убедимся, что хендлер вызывается
+    await callback.answer("⚠️ Отладка: запрос одобрения получен", show_alert=True)
+
     if callback.from_user.id != OWNER_ID:
         await callback.answer("⛔ Только для владельца!", show_alert=True)
         return
