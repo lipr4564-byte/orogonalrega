@@ -4,18 +4,16 @@
 
 from html import escape
 from typing import List
-
 from database import get_registrations, get_current_year
 from data_loader import (
     get_all_countries, get_mo, get_vice, get_pmcs,
-    get_terror, get_other, get_data_year,
+    get_terror, get_other, get_superpowers, get_data_year,
 )
 from config import STAFF, BOT_USERNAME
 from premium_emoji import ce
 
 
 def format_user_mention(reg: dict) -> str:
-    """Форматировать упоминание пользователя"""
     if reg.get("username"):
         return f"@{escape(reg['username'])}"
     if reg.get("full_name"):
@@ -24,10 +22,6 @@ def format_user_mention(reg: dict) -> str:
 
 
 def _build_section_lines(slots: List[dict], regs: dict, data_year: int) -> str:
-    """
-    Собрать строки ТОЛЬКО занятых слотов для секции.
-    Свободные слоты не показываем.
-    """
     lines = []
     for slot in slots:
         key = slot.get("key", "")
@@ -43,29 +37,25 @@ def _build_section_lines(slots: List[dict], regs: dict, data_year: int) -> str:
 
 
 def _blockquote(content: str) -> str:
-    """Telegram HTML blockquote"""
     return f"<blockquote>{content}</blockquote>"
 
 
 def build_reg_message(display_year: int = None) -> str:
-    """
-    Собрать сообщение регистрации для темы.
-    display_year — год для отображения (текущий вайп).
-    data_year — год из которого берутся слоты.
-    """
     if display_year is None:
         display_year = get_current_year()
 
     data_year = get_data_year(display_year)
     regs = get_registrations()
 
-    # Получаем все секции
     countries = get_all_countries(data_year)
+    superpowers = get_superpowers(data_year)
+    # Объединяем страны и сверхдержавы в одну секцию
+    all_countries = countries + superpowers
     mo_vice = get_mo(data_year) + get_vice(data_year)
     pmcs = get_pmcs(data_year)
     terror_other = get_terror(data_year) + get_other(data_year)
 
-    countries_text = _build_section_lines(countries, regs, data_year)
+    countries_text = _build_section_lines(all_countries, regs, data_year)
     mo_vice_text = _build_section_lines(mo_vice, regs, data_year)
     pmc_text = _build_section_lines(pmcs, regs, data_year)
     terror_text = _build_section_lines(terror_other, regs, data_year)
@@ -83,7 +73,7 @@ def build_reg_message(display_year: int = None) -> str:
         f"{ce('5291920885773526040', '📅')} "
         f"<b>Текущий вайп:</b> {display_year} год\n\n"
         f"─────────────────────\n"
-        f"{ce('5291925893705398356', '🏳️')} <b>Занятые страны:</b>\n"
+        f"{ce('5291925893705398356', '🏳️')} <b>Занятые страны (включая сверхдержавы):</b>\n"
         f"{_blockquote(countries_text)}\n\n"
         f"{ce('5292251447931461936', '⚔️')} <b>Занятые МО/Вице стран:</b>\n"
         f"{_blockquote(mo_vice_text)}\n\n"
